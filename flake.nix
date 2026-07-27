@@ -16,10 +16,8 @@
   inputs = {
     nixpkgs.url = "github:nixos/nixpkgs/nixpkgs-unstable";
 
-    flake-utils.url = "github:numtide/flake-utils";
-
     nvchad-starter = {
-      url = "github:NvChad/starter/main"; # people who want to use a different starter could override this.
+      url = "github:NvChad/starter/main";
       flake = false;
     };
   };
@@ -28,42 +26,71 @@
     {
       self,
       nixpkgs,
-      flake-utils,
       nvchad-starter,
     }:
-    flake-utils.lib.eachDefaultSystem (
-      system:
-      let
-        pkgs = import nixpkgs { inherit system; };
-      in
-      {
-        packages = rec {
-          nvchad = pkgs.callPackage ./nix/nvchad.nix { starterRepo = nvchad-starter; };
-          default = nvchad;
+    let
+      supportedSystems = [
+        "x86_64-linux"
+        "aarch64-linux"
+        "aarch64-darwin"
+      ];
+      forAllSystems = nixpkgs.lib.genAttrs supportedSystems;
+      pkgsFor = forAllSystems (
+        system:
+        import nixpkgs {
+          inherit system;
+        }
+      );
+    in
+    {
+      packages = forAllSystems (
+        system:
+        let
+          nvchadPackage = pkgsFor.${system}.callPackage ./nix/nvchad.nix {
+            starterRepo = nvchad-starter;
+          };
+        in
+        {
+          nvchad = nvchadPackage;
+          default = nvchadPackage;
+        }
+      );
+
+      apps = forAllSystems (
+        system:
+        let
+          package = self.packages.${system}.nvchad;
+          nvchadApp = {
+            type = "app";
+            program = "${package}/bin/nvim";
+            meta = package.meta;
+          };
+        in
+        {
+          nvchad = nvchadApp;
+          default = nvchadApp;
+        }
+      );
+
+      checks = self.packages;
+
+      devShells = forAllSystems (system: {
+        default = pkgsFor.${system}.mkShell {
+          buildInputs = [ pkgsFor.${system}.mdbook ];
         };
-        apps = rec {
-          nvchad =
-            flake-utils.lib.mkApp {
-              drv = self.packages.${system}.nvchad;
-              name = "nvim";
-            }
-            # ? workaround add meta attrs to avoid warning message
-            // {
-              meta = self.packages.${system}.nvchad.meta;
-            };
-          default = nvchad;
+      });
+
+      homeManagerModules =
+        let
+          nvchadModule = import ./nix/module.nix {
+            starterRepo = nvchad-starter;
+          };
+        in
+        {
+          nvchad = nvchadModule;
+          default = nvchadModule;
         };
-        checks = self.packages.${system};
-        devShells.default = pkgs.mkShell {
-          buildInputs = [ pkgs.mdbook ];
-        };
-      }
-    )
-    // {
-      homeManagerModules = rec {
-        nvchad = import ./nix/module.nix { starterRepo = nvchad-starter; };
-        default = nvchad;
-      };
+
       # DEPRECATED: This attribute will be removed soon.
       # Use homeManagerModules.default instead.
       homeManagerModule = self.homeManagerModules.nvchad;

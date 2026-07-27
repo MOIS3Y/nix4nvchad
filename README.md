@@ -36,6 +36,70 @@ nix run github:nix-community/nix4nvchad
 > [!WARNING]  
 > If you already have an existing Neovim configuration at `~/.config/nvim`, this command will create a backup before launching. Make sure your environment is safe.
 
+## Intel macOS
+
+`x86_64-darwin` is not included in the officially tested flake outputs
+because current Nixpkgs releases no longer support Intel macOS. Commands
+such as the following are therefore unsupported on Intel Macs:
+
+```console
+nix run github:nix-community/nix4nvchad
+```
+
+As a best-effort workaround, the Home Manager module can still be used
+with the last Nixpkgs branch that supports Intel macOS:
+
+```nix
+{
+  inputs = {
+    nixpkgs.url = "github:NixOS/nixpkgs/nixpkgs-26.05-darwin";
+
+    home-manager = {
+      url = "github:nix-community/home-manager/release-26.05";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
+
+    nix4nvchad = {
+      url = "github:nix-community/nix4nvchad";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
+  };
+
+  outputs =
+    {
+      nixpkgs,
+      home-manager,
+      nix4nvchad,
+      ...
+    }:
+    let
+      system = "x86_64-darwin";
+
+      pkgs = import nixpkgs {
+        inherit system;
+      };
+    in
+    {
+      homeConfigurations.example = home-manager.lib.homeManagerConfiguration {
+        inherit pkgs;
+
+        modules = [
+          nix4nvchad.homeManagerModules.default
+
+          {
+            programs.nvchad.enable = true;
+          }
+        ];
+      };
+    };
+}
+```
+
+This works because the module builds the package with the user's `pkgs`.
+It does not add `packages.x86_64-darwin` or `apps.x86_64-darwin` to
+nix4nvchad itself. This workaround is best effort and is not tested by
+the project's CI.
+
 ## Usage Guide
 
 Comprehensive guides on installation, configuration, and advanced usage are available in the official **[Documentation](https://nix-community.github.io/nix4nvchad/)**.
