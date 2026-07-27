@@ -1,39 +1,50 @@
-# Deprecated Features
+# Removed features
 
-This page lists features, attributes, or configuration options that are currently deprecated and slated for removal in future versions of `nix4nvchad`.
+This page documents removed features and their available migration paths.
 
-## `homeManagerModule` Attribute
+## `homeManagerModule` attribute
 
-The flake output attribute `inputs.nix4nvchad.homeManagerModule` is **deprecated** and will be removed in the near future. 
+The deprecated singular flake output
+`inputs.nix4nvchad.homeManagerModule` has been removed. Use
+`homeManagerModules.default` instead.
 
-### Why is it being removed?
+Before:
 
-In the Nix flake ecosystem, Home Manager modules exported by a flake are inherently non-standard (unlike NixOS or nix-darwin modules). The standard and most widely accepted way to export these is under the `homeManagerModules` (plural) attribute, typically exposing the default module as `homeManagerModules.default`.
-
-Maintaining the singular `homeManagerModule` attribute is redundant, creates unnecessary aliases in the flake output, and can trigger validation warnings in some Nix checking tools.
-
-### What should you use instead?
-
-You should update your imports to use the standard `homeManagerModules.default` path.
-
-**❌ Deprecated:**
 ```nix
-{ inputs, pkgs, ... }: {
-  imports = [
-    inputs.nix4nvchad.homeManagerModule
-  ];
-  
+{ inputs, ... }: {
+  imports = [ inputs.nix4nvchad.homeManagerModule ];
+
   programs.nvchad.enable = true;
 }
 ```
 
-**✅ Recommended:**
+After:
+
 ```nix
-{ inputs, pkgs, ... }: {
-  imports = [
-    inputs.nix4nvchad.homeManagerModules.default
-  ];
-  
+{ inputs, ... }: {
+  imports = [ inputs.nix4nvchad.homeManagerModules.default ];
+
   programs.nvchad.enable = true;
 }
 ```
+
+## Intel macOS support
+
+Official `x86_64-darwin` support has been removed from nix4nvchad.
+Nixpkgs 26.05 is the last release to support Intel macOS. Nixpkgs
+unstable removed the platform after the 26.05 branch was created, so it
+can no longer be evaluated by nix4nvchad's unstable Nixpkgs input.
+
+The change is documented in the
+[nix-community announcement][announcement] and the corresponding
+[upstream Nixpkgs commit][upstream].
+
+The Home Manager module may still work as a best-effort workaround when
+the user's configuration supplies `pkgs` from the final supported Nixpkgs
+branch. This does not restore `x86_64-darwin` flake outputs and is not
+tested by the project's CI.
+
+[announcement]:
+  https://github.com/orgs/nix-community/discussions/2195
+[upstream]:
+  https://github.com/NixOS/nixpkgs/commit/90796a2

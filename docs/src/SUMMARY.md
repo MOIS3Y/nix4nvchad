@@ -6,4 +6,4 @@
 - [Advanced Usage](advanced_usage.md)
 
 ---
-- [Deprecated](deprecated.md)
+- [Removed features](deprecated.md)
