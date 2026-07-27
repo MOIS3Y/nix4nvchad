@@ -90,9 +90,5 @@
           nvchad = nvchadModule;
           default = nvchadModule;
         };
-
-      # DEPRECATED: This attribute will be removed soon.
-      # Use homeManagerModules.default instead.
-      homeManagerModule = self.homeManagerModules.nvchad;
     };
 }

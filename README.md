@@ -33,14 +33,21 @@ Want to see it in action without installing? You can run it directly:
 nix run github:nix-community/nix4nvchad
 ```
 
-> [!WARNING]  
-> If you already have an existing Neovim configuration at `~/.config/nvim`, this command will create a backup before launching. Make sure your environment is safe.
+> [!NOTE]
+> When NvChad needs to initialize `~/.config/nvim`, an existing directory
+> is moved to a timestamped backup such as
+> `~/.config/nvim_2026_07_27_14_30_00.bak`.
 
 ## Intel macOS
 
-`x86_64-darwin` is not included in the officially tested flake outputs
-because current Nixpkgs releases no longer support Intel macOS. Commands
-such as the following are therefore unsupported on Intel Macs:
+Official `x86_64-darwin` support was removed because Nixpkgs unstable no
+longer supports Intel macOS. Nixpkgs 26.05 is the last release to support
+the platform. The removal landed in an [upstream Nixpkgs commit][upstream]
+and was followed by a [nix-community announcement][announcement].
+
+Consequently, `x86_64-darwin` is not included in the officially tested
+flake outputs. Commands such as the following are unsupported on Intel
+Macs:
 
 ```console
 nix run github:nix-community/nix4nvchad
@@ -99,6 +106,11 @@ This works because the module builds the package with the user's `pkgs`.
 It does not add `packages.x86_64-darwin` or `apps.x86_64-darwin` to
 nix4nvchad itself. This workaround is best effort and is not tested by
 the project's CI.
+
+[upstream]:
+  https://github.com/NixOS/nixpkgs/commit/90796a2
+[announcement]:
+  https://github.com/orgs/nix-community/discussions/2195
 
 ## Usage Guide
 
